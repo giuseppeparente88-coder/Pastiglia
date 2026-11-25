@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pastiglia">
+<title>La pastiglia di stasera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F7; --surface:#FFFFFF; --ink:#1F2340; --muted:#6E7391; --faint:#D5D8E6;
+  --pill:#6B5BD2; --pill-2:#C9C2F5; --done:#2F8F6B; --done-2:#BFE6D5; --warn-bg:#FBE7C6; --warn-ink:#6B4208;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15172A; --surface:#1E2138; --ink:#ECEBFA; --muted:#9A9DBA; --faint:#33375A;
+    --pill:#9C8FF0; --pill-2:#3D3770; --done:#5CC49C; --done-2:#1F4A3B; --warn-bg:#4A3612; --warn-ink:#F6D9A6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15172A; --surface:#1E2138; --ink:#ECEBFA; --muted:#9A9DBA; --faint:#33375A;
+  --pill:#9C8FF0; --pill-2:#3D3770; --done:#5CC49C; --done-2:#1F4A3B; --warn-bg:#4A3612; --warn-ink:#F6D9A6;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:17px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+main{max-width:440px; margin:0 auto; padding:40px 24px 48px}
+h1{
+  font-family:"Young Serif",Georgia,"Times New Roman",serif; font-weight:400;
+  font-size:clamp(2rem,9vw,2.6rem); line-height:1.1; margin:0 0 8px; letter-spacing:-0.01em;
+}
+.date{color:var(--muted); margin:0 0 40px}
+
+.capsule-wrap{display:flex; flex-direction:column; align-items:center; gap:18px; margin-bottom:44px}
+.capsule{
+  position:relative; width:min(78vw,300px); height:min(34vw,130px);
+  border:0; padding:0; border-radius:999px; cursor:pointer; overflow:hidden;
+  display:flex; background:var(--pill-2);
+  box-shadow:0 18px 40px -18px var(--pill);
+  transition:transform .15s ease, box-shadow .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.capsule:active{transform:scale(.97)}
+.capsule:focus-visible{outline:3px solid var(--ink); outline-offset:6px}
+.capsule .half{flex:1; display:block; transition:background .4s ease}
+.capsule .left{background:var(--pill)}
+.capsule .right{background:var(--pill-2)}
+.capsule .shine{
+  position:absolute; left:12%; right:12%; top:18%; height:16%;
+  border-radius:999px; background:rgba(255,255,255,.35); pointer-events:none;
+}
+.capsule .check{
+  position:absolute; inset:0; display:grid; place-items:center;
+  opacity:0; transform:scale(.6); transition:opacity .3s ease, transform .3s ease;
+}
+.capsule .check svg{width:56px; height:56px}
+.capsule.taken{box-shadow:0 18px 40px -18px var(--done)}
+.capsule.taken .left,.capsule.taken .right{background:var(--done)}
+.capsule.taken .check{opacity:1; transform:scale(1)}
+.capsule.due{animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:rotate(0)}8%{transform:rotate(-4deg)}16%{transform:rotate(4deg)}24%{transform:rotate(0)}}
+
+.status{font-size:1.15rem; text-align:center; margin:0; min-height:1.5em}
+.undo{
+  background:none; border:0; color:var(--muted); font:inherit; font-size:.95rem;
+  text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:6px 10px;
+}
+.undo[hidden]{display:none}
+
+.streak{display:flex; align-items:baseline; gap:10px; margin:0 0 18px}
+.streak b{font-family:"Young Serif",Georgia,serif; font-weight:400; font-size:2.4rem; line-height:1}
+.streak span{color:var(--muted)}
+
+.grid{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:12px}
+.grid .wd{text-align:center; font-size:.8rem; color:var(--muted)}
+.dot{
+  aspect-ratio:1; border-radius:50%; display:grid; place-items:center;
+  font-size:.78rem; color:var(--muted); border:2px solid var(--faint);
+}
+.dot.taken{background:var(--done); border-color:var(--done); color:var(--surface)}
+.dot.missed{border-style:dashed}
+.dot.before{border-color:transparent; opacity:.45}
+.dot.future{border-color:transparent; opacity:.3}
+.dot.today{border-color:var(--pill); color:var(--ink); font-weight:600}
+.dot.today.taken{border-color:var(--done); color:var(--surface)}
+.legend{font-size:.85rem; color:var(--muted); margin:0 0 40px}
+
+.settings{
+  background:var(--surface); border-radius:20px; padding:18px 20px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.settings label{font-weight:500}
+.settings small{display:block; color:var(--muted); font-weight:400; font-size:.85rem}
+input[type=time]{
+  font:inherit; font-size:1.1rem; color:var(--ink); background:var(--bg);
+  border:0; border-radius:12px; padding:8px 12px; min-width:104px;
+}
+input[type=time]:focus-visible{outline:2px solid var(--pill)}
+
+.alert{background:var(--warn-bg); color:var(--warn-ink); border-radius:16px; padding:14px 18px; margin:-16px 0 32px; font-weight:500}
+.alert[hidden]{display:none}
+.box{background:var(--surface); border-radius:20px; padding:20px; margin-bottom:16px}
+.box [hidden]{display:none}
+.box-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:16px}
+.box-head h2{font-family:"Young Serif",Georgia,"Times New Roman",serif; font-weight:400; font-size:1.35rem; margin:0}
+.box-head span{color:var(--muted); font-size:.95rem; text-align:right}
+.box p{margin:0 0 16px; color:var(--muted); font-size:.95rem}
+.blister{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; padding:12px; border-radius:14px; background:var(--bg); margin-bottom:14px}
+.blister i{height:20px; border-radius:999px; background:var(--pill)}
+.blister i.empty{background:transparent; border:2px dashed var(--faint)}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.btn{font:inherit; font-weight:600; border:0; border-radius:12px; padding:12px 16px; background:var(--ink); color:var(--bg); cursor:pointer}
+.step{font:inherit; font-size:1.2rem; width:44px; height:44px; border-radius:12px; border:0; background:var(--bg); color:var(--ink); cursor:pointer}
+.btn:focus-visible,.step:focus-visible,.undo:focus-visible{outline:2px solid var(--pill); outline-offset:2px}
+.fix{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; color:var(--muted); font-size:.9rem}
+.fix div{display:flex; gap:8px}
+input[type=number]{font:inherit; font-size:1.1rem; color:var(--ink); background:var(--bg); border:0; border-radius:12px; padding:10px 12px; width:90px}
+input[type=number]:focus-visible{outline:2px solid var(--pill)}
+
+@media (prefers-reduced-motion: reduce){
+  .capsule,.capsule .half,.capsule .check{transition:none}
+  .capsule.due{animation:none}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="greet">Buonasera</h1>
+  <p class="date" id="date"></p>
+  <p class="alert" id="alert" role="status" hidden></p>
+
+  <section class="capsule-wrap">
+    <button class="capsule" id="capsule" aria-pressed="false" aria-label="Segna la pastiglia come presa">
+      <span class="half left"></span><span class="half right"></span>
+      <span class="shine"></span>
+      <span class="check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </span>
+    </button>
+    <p class="status" id="status" aria-live="polite"></p>
+    <button class="undo" id="undo" hidden>Annulla</button>
+  </section>
+
+  <section aria-label="Ultime quattro settimane">
+    <p class="streak"><b id="streakN">0</b><span id="streakL">sere di fila</span></p>
+    <div class="grid" id="grid"></div>
+    <p class="legend">Pieno: presa. Tratteggiato: saltata.</p>
+  </section>
+
+  <section class="box" aria-labelledby="boxTitle">
+    <div class="box-head"><h2 id="boxTitle">La confezione</h2><span id="boxCount"></span></div>
+    <div id="boxSetup">
+      <p>Quante pastiglie restano adesso nella confezione che stai usando?</p>
+      <div class="row">
+        <input type="number" id="setupN" inputmode="numeric" min="0" max="999" value="24" aria-label="Pastiglie rimaste">
+        <button class="btn" id="setupSave">Salva</button>
+      </div>
+    </div>
+    <div id="boxMain" hidden>
+      <div class="blister" id="blister" role="img"></div>
+      <p id="boxInfo"></p>
+      <div class="row">
+        <button class="btn" id="buy">Ho comprato una confezione</button>
+        <button class="undo" id="undoBuy" hidden>Annulla acquisto</button>
+      </div>
+      <div class="fix"><span>Correggi il conteggio</span><div><button class="step" id="minus" aria-label="Una pastiglia in meno">−</button><button class="step" id="plus" aria-label="Una pastiglia in più">+</button></div></div>
+    </div>
+  </section>
+
+  <section class="settings">
+    <label for="time">Orario della pastiglia<small>Dopo quest’ora la capsula ti fa cenno</small></label>
+    <input type="time" id="time" value="21:00">
+  </section>
+</main>
+
+<script>
+(function(){
+  var KEY = "pastiglia-v1";
+  var state = { log:{}, time:"21:00", stock:null, buys:[], lastDec:null };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var s = JSON.parse(raw); if (s && typeof s === "object") { state.log = s.log || {}; state.time = s.time || "21:00"; state.stock = typeof s.stock === "number" ? s.stock : null; state.buys = s.buys || []; state.lastDec = s.lastDec || null; } }
+  } catch(e) {}
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
+
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function ymd(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  // Una "sera" dura fino alle 4 del mattino: se la prende dopo mezzanotte conta per la sera prima.
+  function eveningDate(now){ var d = new Date(now); if (d.getHours() < 4) d.setDate(d.getDate()-1); d.setHours(12,0,0,0); return d; }
+
+  var $ = function(id){ return document.getElementById(id); };
+  var capsule = $("capsule"), status = $("status"), undo = $("undo"), timeInput = $("time");
+  timeInput.value = state.time;
+
+  function render(){
+    var now = new Date();
+    var ev = eveningDate(now), key = ymd(ev);
+    var taken = state.log[key];
+
+    var h = now.getHours();
+    $("greet").textContent = h >= 4 && h < 13 ? "Buongiorno" : h >= 13 && h < 18 ? "Buon pomeriggio" : "Buonasera";
+    var ds = ev.toLocaleDateString("it-IT", { weekday:"long", day:"numeric", month:"long" });
+    $("date").textContent = ds.charAt(0).toUpperCase() + ds.slice(1);
+
+    var parts = state.time.split(":"), due = new Date(now);
+    due.setHours(+parts[0], +parts[1], 0, 0);
+    var isDue = !taken && (now >= due || h < 4);
+
+    capsule.classList.toggle("taken", !!taken);
+    capsule.classList.toggle("due", isDue);
+    capsule.setAttribute("aria-pressed", taken ? "true" : "false");
+    undo.hidden = !taken;
+
+    if (taken) status.textContent = "Presa alle " + taken + ". A domani sera.";
+    else if (isDue) status.textContent = "È ora: prendila e tocca la capsula.";
+    else status.textContent = "Stasera alle " + state.time + ". Tocca la capsula quando l’hai presa.";
+
+    // Serie di sere consecutive
+    var streak = 0, d = new Date(ev);
+    if (!taken) d.setDate(d.getDate()-1);
+    while (state.log[ymd(d)]) { streak++; d.setDate(d.getDate()-1); }
+    $("streakN").textContent = streak;
+    $("streakL").textContent = streak === 1 ? "sera di fila" : "sere di fila";
+
+    // Griglia: 4 settimane, da lunedì
+    var keys = Object.keys(state.log).sort();
+    var first = keys.length ? keys[0] : key;
+    var grid = $("grid"); grid.textContent = "";
+    ["L","M","M","G","V","S","D"].forEach(function(w){
+      var el = document.createElement("div"); el.className = "wd"; el.textContent = w; el.setAttribute("aria-hidden","true"); grid.appendChild(el);
+    });
+    var start = new Date(ev);
+    var dow = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - dow - 21);
+    for (var i = 0; i < 28; i++){
+      var c = new Date(start); c.setDate(start.getDate()+i);
+      var k = ymd(c), el = document.createElement("div");
+      el.className = "dot"; el.textContent = c.getDate();
+      var label = c.toLocaleDateString("it-IT",{day:"numeric",month:"long"});
+      if (k > key) { el.classList.add("future"); }
+      else if (state.log[k]) { el.classList.add("taken"); label += ", presa alle " + state.log[k]; }
+      else if (k === key) { label += ", stasera"; }
+      else if (k < first) { el.classList.add("before"); }
+      else { el.classList.add("missed"); label += ", saltata"; }
+      if (k === key) el.classList.add("today");
+      el.setAttribute("aria-label", label);
+      grid.appendChild(el);
+    }
+    renderBox(ev, taken);
+  }
+
+  var PACK = 24, LOW = 7, justBought = false;
+  function fmt(d, wd){ return d.toLocaleDateString("it-IT", wd ? {weekday:"long", day:"numeric", month:"long"} : {day:"numeric", month:"long"}); }
+  function renderBox(ev, taken){
+    var alertEl = $("alert");
+    var hasStock = typeof state.stock === "number";
+    $("boxSetup").hidden = hasStock; $("boxMain").hidden = !hasStock;
+    if (!hasStock) { $("boxCount").textContent = ""; alertEl.hidden = true; return; }
+    var n = state.stock;
+    var cur = n > 0 ? ((n - 1) % PACK) + 1 : 0;
+    var spare = n > 0 ? Math.floor((n - 1) / PACK) : 0;
+    $("boxCount").textContent = (n === 1 ? "1 rimasta" : n + " rimaste") + (spare ? ", " + (spare === 1 ? "1 confezione" : spare + " confezioni") + " di scorta" : "");
+    var bl = $("blister"); bl.textContent = "";
+    for (var i = 0; i < PACK; i++){ var p = document.createElement("i"); if (i >= cur) p.className = "empty"; bl.appendChild(p); }
+    bl.setAttribute("aria-label", cur + " pastiglie su " + PACK + " nella confezione aperta");
+    var end = null;
+    if (n > 0) { end = new Date(ev); end.setDate(end.getDate() + (taken ? n : n - 1)); }
+    var info = end ? "Bastano fino a " + fmt(end, true) + "." : "Confezione finita.";
+    var lastBuy = state.buys.length ? state.buys[state.buys.length - 1] : null;
+    if (lastBuy) info += " Ultimo acquisto: " + fmt(new Date(lastBuy + "T12:00:00"), false) + ".";
+    $("boxInfo").textContent = info;
+    $("undoBuy").hidden = !justBought;
+    if (n <= LOW) {
+      alertEl.hidden = false;
+      alertEl.textContent = n === 0 ? "Le pastiglie sono finite: compra una nuova confezione." : (n === 1 ? "Ne resta 1" : "Ne restano " + n) + ": compra la prossima confezione entro " + fmt(end, true) + ".";
+    } else alertEl.hidden = true;
+  }
+
+  capsule.addEventListener("click", function(){
+    var now = new Date(), key = ymd(eveningDate(now));
+    if (state.log[key]) return;
+    state.log[key] = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    if (typeof state.stock === "number" && state.stock > 0) { state.stock--; state.lastDec = key; }
+    justBought = false;
+    save(); render();
+    if (navigator.vibrate) { try { navigator.vibrate(30); } catch(e) {} }
+  });
+  undo.addEventListener("click", function(){
+    var key = ymd(eveningDate(new Date()));
+    delete state.log[key];
+    if (state.lastDec === key) { state.stock++; state.lastDec = null; }
+    save(); render();
+  });
+  $("buy").addEventListener("click", function(){
+    state.stock = (state.stock || 0) + PACK; state.buys.push(ymd(new Date())); justBought = true; save(); render();
+  });
+  $("undoBuy").addEventListener("click", function(){
+    if (!justBought) return;
+    state.stock = Math.max(0, state.stock - PACK); state.buys.pop(); justBought = false; save(); render();
+  });
+  $("minus").addEventListener("click", function(){ if (state.stock > 0) { state.stock--; justBought = false; save(); render(); } });
+  $("plus").addEventListener("click", function(){ state.stock++; justBought = false; save(); render(); });
+  $("setupSave").addEventListener("click", function(){
+    var v = parseInt($("setupN").value, 10);
+    if (isNaN(v) || v < 0 || v > 999) { $("setupN").focus(); return; }
+    state.stock = v; save(); render();
+  });
+  timeInput.addEventListener("change", function(){
+    if (/^\d{2}:\d{2}$/.test(timeInput.value)) { state.time = timeInput.value; save(); render(); }
+  });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) render(); });
+  setInterval(render, 60000);
+  render();
+})();
+</script>
+</body>
+</html>
